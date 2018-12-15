@@ -15,14 +15,8 @@ function Block:fall() self._y = self._y + BLOCK_HEIGHT end
 
 function Block:moveLeft()
     self._x = self._x - BLOCK_WIDTH
-    if (self._x < 0) then
-        self:moveRight()
-    end
 end
 
 function Block:moveRight()
     self._x = self._x + BLOCK_WIDTH
-    if (self._x > WINDOW_WIDTH - BLOCK_WIDTH) then
-        self:moveLeft()
-    end
 end
