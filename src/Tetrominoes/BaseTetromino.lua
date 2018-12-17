@@ -1,5 +1,5 @@
 ---@class BaseTetromino
-BaseTetromino = Class{}
+BaseTetromino = Class {}
 
 local maxFallingTime = 0.5
 local fallingTimer = maxFallingTime
@@ -30,26 +30,31 @@ function BaseTetromino:update(dt)
         self:move()
         self:rotate()
         self:fall(dt)
+        self:fallAccelerate()
         self:stop()
+        if (self._stopped) then self:freeBlocks() end
     end
 end
 -----------------------------------------
 function BaseTetromino:move()
     if (love.keyboard.wasPressed("left")) then
         self:moveLeft()
-        if (not self:checkBlocksPosValidity()) then
+        if (not self:blocksInPlayArea()) or (not self:updateBlocksIndexes()) then
             self:moveRight()
         end
+        self:updateBlocksIndexes()
     elseif (love.keyboard.wasPressed("right")) then
         self:moveRight()
-        if (not self:checkBlocksPosValidity()) then
+        if (not self:blocksInPlayArea()) or (not self:updateBlocksIndexes()) then
             self:moveLeft()
         end
+        self:updateBlocksIndexes()
     end
 end
 
 function BaseTetromino:moveLeft()
     self._x = self._x - BLOCK_WIDTH
+    self:removeBlocksIndexes()
     for i = 1, 4 do
         for j = 1, 4 do
             if (self._blocks[i][j]) then
@@ -61,6 +66,7 @@ end
 
 function BaseTetromino:moveRight()
     self._x = self._x + BLOCK_WIDTH
+    self:removeBlocksIndexes()
     for i = 1, 4 do
         for j = 1, 4 do
             if (self._blocks[i][j]) then
@@ -79,19 +85,22 @@ function BaseTetromino:rotate(MAPPINGS)
         end
         self:useMapping(MAPPINGS)
 
-        if (not self:checkBlocksPosValidity()) then
+        if (not self:blocksInPlayArea()) or (not self:updateBlocksIndexes()) then
             if (self._mappingIndex == 1) then
                 self._mappingIndex = 4
             else
                 self._mappingIndex = self._mappingIndex - 1
             end
             self:useMapping(MAPPINGS)
+            self:updateBlocksIndexes()
         end
     end
 end
 
 function BaseTetromino:fall(dt)
     if (fallingTimer == 0) then
+        self:removeBlocksIndexes()
+
         self._y = self._y + BLOCK_HEIGHT
         for i = 1, 4 do
             for j = 1, 4 do
@@ -101,16 +110,43 @@ function BaseTetromino:fall(dt)
             end
         end
         fallingTimer = maxFallingTime
-    else fallingTimer = math.max(0, fallingTimer - dt) end
+
+        self:updateBlocksIndexes()
+    else
+        fallingTimer = math.max(0, fallingTimer - dt)
+    end
+end
+
+function BaseTetromino:fallAccelerate()
+    if (love.keyboard.wasPressed("down")) then
+        maxFallingTime = 0.1
+    end
+    if (love.keyboard.wasReleased("down")) then
+        maxFallingTime = 1.5
+    end
 end
 
 function BaseTetromino:stop()
     for i = 1, 4 do
         for j = 1, 4 do
             if (self._blocks[i][j]) then
+                local cur = self._blocks[i][j]
+                local row, column = cur._y / BLOCK_HEIGHT + 1, cur._x / BLOCK_WIDTH + 1
                 if (self._blocks[i][j]._y >= 225) then
                     self._stopped = true
                     return
+                end
+
+                if (gBlocks[row + 1]) then
+                    if (gBlocks[row + 1][column]) then
+                        if (i == 4) then
+                            self._stopped = true
+                            return
+                        elseif (gBlocks[row + 1][column] ~= self._blocks[i + 1][j]) then
+                            self._stopped = true
+                            return
+                        end
+                    end
                 end
             end
         end
@@ -127,6 +163,8 @@ function BaseTetromino:createBlockAt(row, column)
 end
 
 function BaseTetromino:useMapping(MAPPINGS)
+    self:removeBlocksIndexes()
+
     self._blocks = {{}, {}, {}, {}}
     self._mapping = MAPPINGS[self._mappingIndex]
     for i = 1, 4 do
@@ -138,14 +176,63 @@ function BaseTetromino:useMapping(MAPPINGS)
     end
 end
 
-function BaseTetromino:checkBlocksPosValidity()
+function BaseTetromino:blocksInPlayArea()
     for i = 1, 4 do
         for j = 1, 4 do
             if (self._blocks[i][j]) then
-                if (self._blocks[i][j]._x < 0) then return false end
-                if (self._blocks[i][j]._x >= WINDOW_WIDTH) then return false end
+                if (self._blocks[i][j]._x < 0) then
+                    return false
+                end
+                if (self._blocks[i][j]._x >= WINDOW_WIDTH) then
+                    return false
+                end
             end
         end
     end
     return true
+end
+
+function BaseTetromino:removeBlocksIndexes()
+    for i = 1, 4 do
+        for j = 1, 4 do
+            if (self._blocks[i][j]) then
+                local cur = self._blocks[i][j]
+                local row, column = cur._y / BLOCK_HEIGHT + 1, cur._x / BLOCK_WIDTH + 1
+                if (gBlocks[row]) then
+                    if (gBlocks[row][column] == cur) then
+                        gBlocks[row][column] = nil
+                    end
+                end
+            end
+        end
+    end
+end
+
+function BaseTetromino:updateBlocksIndexes()
+    for i = 1, 4 do
+        for j = 1, 4 do
+            if (self._blocks[i][j]) then
+                local cur = self._blocks[i][j]
+                local row, column = cur._y / BLOCK_HEIGHT + 1, cur._x / BLOCK_WIDTH + 1
+                if (gBlocks[row] == nil) then
+                    gBlocks[row] = {}
+                end
+                if (gBlocks[row][column]) and (gBlocks[row][column] ~= cur) then
+                    return false
+                end
+                gBlocks[row][column] = cur
+            end
+        end
+    end
+    return true
+end
+
+function BaseTetromino:freeBlocks()
+    for i = 1, 4 do
+        for j = 1, 4 do
+            if (self._blocks[i][j]) then
+                self._blocks[i][j] = nil
+            end
+        end
+    end
 end
