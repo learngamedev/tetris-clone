@@ -16,7 +16,7 @@ function Tetrominoes:render()
 end
 
 function Tetrominoes:update(dt)
-    self:spawnCheck(dt)
+    self:spawn(dt)
 
     for i = 1, #self._tetrominoes do
         self._tetrominoes[i]:update(dt)
@@ -34,19 +34,20 @@ end
 
 function Tetrominoes:remove(atIndex)
     if (self._tetrominoes[atIndex]) then
-        table.remove(self._tetrominoes, atIndex)
+        self._tetrominoes[atIndex] = nil
     end
 end
 
 function Tetrominoes:randomizeShape()
     local shapeIndex = math.random(1, #SHAPE_LIST)
-    return SHAPE_LIST[shapeIndex]
+    -- return SHAPE_LIST[shapeIndex]
+    return "L"
 end
 
-function Tetrominoes:spawnCheck(dt)
+function Tetrominoes:spawn(dt)
     -- Spawn new randomized Tetromino
     if (self._spawnTetromino) then
-        self:add(0, 0, self:randomizeShape(), #self._tetrominoes + 1)
+        self:add(4 * BLOCK_WIDTH, -(BLOCK_HEIGHT * 2), self:randomizeShape(), #self._tetrominoes + 1)
         self._spawnTetromino = false
     end
 
