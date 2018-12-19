@@ -2,6 +2,10 @@ Class = require("lib/class")
 
 require("src/Constants")
 require("src/Utils")
+require("src/StateMachine")
+require("src/States/BaseState")
+require("src/States/PlayState")
+require("src/States/ScoreState")
 
 require("src/Block")
 require("src/Tetrominoes/BaseTetromino")

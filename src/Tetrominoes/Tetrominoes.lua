@@ -40,8 +40,7 @@ end
 
 function Tetrominoes:randomizeShape()
     local shapeIndex = math.random(1, #SHAPE_LIST)
-    -- return SHAPE_LIST[shapeIndex]
-    return "L"
+    return SHAPE_LIST[shapeIndex]
 end
 
 function Tetrominoes:spawn(dt)
