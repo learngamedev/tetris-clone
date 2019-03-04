@@ -1,4 +1,4 @@
-require("src/dependencies")
+require("src/Dependencies")
 
 gGamePaused = false
 gPlayerScore = 0
